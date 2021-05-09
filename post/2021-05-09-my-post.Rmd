@@ -1,0 +1,62 @@
+---
+title: "Python and R: Two languages that can play together"
+author: ''
+date: '2021-05-09'
+slug: my-post
+categories: []
+tags: []
+description: ''
+---
+
+## Python and R: Two languages that can play together!
+
+Python and R are two great programming languages used in the world of statistical computing. Although some similarities and difference exist between the two, they can play together by using the reticulate package found in R.
+
+```{R}
+# Import reticulate package
+library(reticulate)
+```
+
+But first, let's look at some of the similarities and differences between Python and R.
+
+
+Let's say we want to assign the number *123* to the variable name *var1*. 
+
+We could use '=' in R to assign the number *123* to the variable name *var1*. However, when using R, we tend to use the symbol '<-' instead. Just know both will give us the same results!
+
+```{R}
+# Assign number 123 
+var1 = 123
+print(var1)
+
+var1 <- 123
+print(var1)
+```
+
+
+But in Python, we'd only use the '=' like this:
+```{python}
+var1 = 123
+print(var1)
+```
+
+See how we got the same answer?
+
+
+Now, let's say we want the sum of *var1* from the R environment and *var1* from the Python environment. How do we do achieve this?
+
+We can do something like this:
+
+```{python}
+# add Python var1 to R var1 using r.
+r.var1 + var1
+
+```
+
+We get a sum of 246. Notice how we must add *r.* in front of *var1* to indicate that we are calling *var1* from the R environment.
+
+
+
+Congratulations! You just learned a little bit on how Python and R can interact with each other.
+
+![](/post/2021-05-09-my-post_files/winnie.gif)

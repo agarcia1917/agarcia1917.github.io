@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Alexandra Garcia" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         May 7, 2021 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="modeling" class="section level2">
+<h2>Modeling</h2>
+<pre class="r"><code>#LEAVE THIS CHUNK ALONE!
+library(knitr)
+opts_chunk$set(fig.align=&quot;center&quot;, fig.height=5, message=FALSE, warning=FALSE, fig.width=8, tidy.opts=list(width.cutoff=60),tidy=TRUE)
+
+class_diag&lt;-function(probs,truth){
+  
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}</code></pre>
+</div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<pre class="r"><code>hep &lt;- read_csv(&quot;hep.csv&quot;)
+# Remove all rows with NAs
+hep &lt;- na.omit(hep)
+hep$Category[which(hep$Category == &quot;0=Blood Donor&quot;)] = &quot;blood_donor&quot;
+hep$Category[which(hep$Category == &quot;3=Cirrhosis&quot;)] = &quot;cirrhosis&quot;
+hep$Category[which(hep$Category == &quot;1=Hepatitis&quot;)] = &quot;hepatitis&quot;
+hep$Category[which(hep$Category == &quot;2=Fibrosis&quot;)] = &quot;fibrosis&quot;
+hep &lt;- hep %&gt;% filter(Category != &quot;0s=suspect Blood Donor&quot;)
+
+hep %&gt;% group_by(Category) %&gt;% count()</code></pre>
+<pre><code>## # A tibble: 4 x 2
+## # Groups:   Category [4]
+##   Category        n
+##   &lt;chr&gt;       &lt;int&gt;
+## 1 blood_donor   526
+## 2 cirrhosis      24
+## 3 fibrosis       12
+## 4 hepatitis      20</code></pre>
+<p>The hep dataset contains clinical and demographic characteristics of blood donors and hepatitis C patients. Numeric variables include age, albumin blood, alkaline phosphatase, alanine transaminase, aspartate transaminase, bilirubin, acetylcholinesterase, cholesterol, creatinine, gamma-glutamyl transferase, and protein levels. Categorical variables include the disease category, if any, to which each person falls into (blood donor, hepatitis C, cirrhosis, and firbosis) and sex composing of male and female. After removing all NAs, there are 526 blood donors, 24 cirrhosis patients, 12 fibrosis patients, and 20 hepatitis patients, for a total number 582 participants.</p>
+</div>
+<div id="manova" class="section level2">
+<h2>MANOVA</h2>
+<pre class="r"><code>manova_hep &lt;- manova(cbind(ALB, ALP, AST, BIL, CHOL) ~ Category, 
+    data = hep)
+summary(manova_hep)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Category 3 0.80518 42.262 15 1728 &lt; 2.2e-16 ***
+## Residuals 578
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary.aov(manova_hep)</code></pre>
+<pre><code>## Response ALB :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Category 3 2485.3 828.43 33.569 &lt; 2.2e-16 ***
+## Residuals 578 14264.4 24.68
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response ALP :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Category 3 40270 13423.3 23.713 1.742e-14 ***
+## Residuals 578 327195 566.1
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response AST :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Category 3 266414 88805 150.13 &lt; 2.2e-16 ***
+## Residuals 578 341888 592
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response BIL :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Category 3 62599 20866.4 104.68 &lt; 2.2e-16 ***
+## Residuals 578 115216 199.3
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response CHOL :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Category 3 63.15 21.0514 18.462 1.891e-11 ***
+## Residuals 578 659.06 1.1402
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code># Perform post-hoc test for 5 ANOVAs
+pairwise.t.test(hep$ALB, hep$Category, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  hep$ALB and hep$Category 
+## 
+##           blood_donor cirrhosis fibrosis
+## cirrhosis &lt; 2e-16     -         -       
+## fibrosis  0.58        6.4e-10   -       
+## hepatitis 0.21        4.5e-14   0.74    
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(hep$ALP, hep$Category, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  hep$ALP and hep$Category 
+## 
+##           blood_donor cirrhosis fibrosis
+## cirrhosis 6.1e-07     -         -       
+## fibrosis  1.5e-05     1.0e-10   -       
+## hepatitis 1.0e-06     2.0e-12   0.68    
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(hep$AST, hep$Category, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  hep$AST and hep$Category 
+## 
+##           blood_donor cirrhosis fibrosis
+## cirrhosis &lt; 2e-16     -         -       
+## fibrosis  &lt; 2e-16     0.0023    -       
+## hepatitis &lt; 2e-16     8.8e-06   0.4503  
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(hep$BIL, hep$Category, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  hep$BIL and hep$Category 
+## 
+##           blood_donor cirrhosis fibrosis
+## cirrhosis &lt;2e-16      -         -       
+## fibrosis  0.175       &lt;2e-16    -       
+## hepatitis 0.016       &lt;2e-16    0.672   
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(hep$CHOL, hep$Category, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  hep$CHOL and hep$Category 
+## 
+##           blood_donor cirrhosis fibrosis
+## cirrhosis 4.5e-12     -         -       
+## fibrosis  0.02475     0.02094   -       
+## hepatitis 0.14467     0.00018   0.37455 
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code># Type I error probability
+1 - (0.95^36)</code></pre>
+<pre><code>## [1] 0.8422208</code></pre>
+<pre class="r"><code># bonferroni
+0.05/36</code></pre>
+<pre><code>## [1] 0.001388889</code></pre>
+<p>After performing a MANOVA test, at least one of the 5 response variables differ by Category (p&lt;0.05). To test for which response variable differs by Category, a post-hoc test was conducted where we saw that all albumin blood, alkaline phosphatase, aspartate transaminase, bilirubin, and cholesterol differ by Category (blood donor, hepatitis C, cirrhosis, and firbosis patient). However this was done prior to adjusting the significance level. In total, 36 hypothesis tests were conducted. The probability of making a type I error is 0.8422208. A 0.001388889 significance level should be used to keep the overall type I error rate at .05 (bonferroni adjusted). It is probable that most, if not all, MANOVA assumptions are violated.</p>
+<p>Using the adjusted significance level, there is a significant mean difference in albumin blood levels between cirrhosis patients and normal blood donor, fibrosis and cirrhosis patients,and hepatitis C and cirrhosis patients. There is also a significant mean difference in alkaline phosphatase levels for all category group comparison except for hepatitis C and fibrosis patients. A mean difference in aspartate transaminase levels for all category group comparison except for hepatitis C and fibrosis patients and fibrosis and cirrhosis patients. For bilirubin levels, there is a significant mean difference for cirrhosis patients and blood donors, cirrhosis and fibrosis patients, and hepatitis C and cirrhosis patients. Finally, there is a significant mean difference in cholesterol levels for only cirrhosis patients and blood donors, and cirrhosis and hepatitis C patients.</p>
+<pre class="r"><code># H0: mean bilirubin levels are the same for fibrosis and
+# cirrhosis patients
+fib &lt;- hep %&gt;% select(Category, BIL) %&gt;% filter(Category == &quot;fibrosis&quot;)
+cir &lt;- hep %&gt;% select(Category, BIL) %&gt;% filter(Category == &quot;cirrhosis&quot;)
+
+fib_cir &lt;- full_join(fib, cir)
+
+t.test(fib$BIL, cir$BIL)</code></pre>
+<pre><code>##
+## Welch Two Sample t-test
+##
+## data: fib$BIL and cir$BIL
+## t = -3.567, df = 24.012, p-value = 0.00156
+## alternative hypothesis: true difference in means is not
+equal to 0
+## 95 percent confidence interval:
+## -73.14187 -19.52480
+## sample estimates:
+## mean of x mean of y
+## 14.16667 60.50000</code></pre>
+<pre class="r"><code># mean BIL difference between fibrosis and cirrhosis patients
+60.5 - 14.16667</code></pre>
+<pre><code>## [1] 46.33333</code></pre>
+<pre class="r"><code>rand_dist &lt;- vector()
+for (i in 1:5000) {
+    new &lt;- data.frame(BIL = sample(fib_cir$BIL), Category = fib_cir$Category)
+    rand_dist[i] &lt;- mean(new[new$Category == &quot;cirrhosis&quot;, ]$BIL) - 
+        mean(new[new$Category == &quot;fibrosis&quot;, ]$BIL)
+}
+
+# two-tailed p-value BIL
+mean(rand_dist &gt; 46.33333 | rand_dist &lt; -46.33333)</code></pre>
+<pre><code>## [1] 0.0112</code></pre>
+<pre class="r"><code>{
+    hist(rand_dist, main = &quot;&quot;, ylab = &quot;&quot;)
+    abline(v = c(-46.33333, 46.33333), col = &quot;red&quot;)
+}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>Using a Welch Two Sample t-test, mean bilirubin levels for fibrosis and cirrhosis patients are 14.167 and 60.50, respectively. The mean difference between the two number was 46.33. A randomization test was then conducted to test whether mean bilirubin levels are the same for fibrosis and cirrhosis patients (null hypothesis) because both groups have small sample sizes. A p-value of 0.0138 was obtained from the randomization test, therefore we can reject the null hypothesis. There is a significant mean difference in bulirubin levels for fibrosis and cirrhosis patients.</p>
+</div>
+<div id="linear-regression" class="section level2">
+<h2>Linear Regression</h2>
+<pre class="r"><code># Mean center numeric variable alkaline phosphate (ALP)
+hep_c &lt;- hep %&gt;% mutate(ALP_c = ALP - mean(ALP, na.rm = T))
+
+# linear model predicting Albumin blood levels from alkaline
+# phosphate (ALP) and Category
+linmod_hep_c &lt;- lm(ALB ~ ALP_c * Category, data = hep_c)
+summary(linmod_hep_c)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = ALB ~ ALP_c * Category, data = hep_c)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -15.986 -2.980 -0.092 3.102 40.019
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 4.219e+01 2.173e-01 194.190 &lt;2e-16 ***
+## ALP_c -5.053e-04 1.214e-02 -0.042 0.967
+## Categorycirrhosis -1.020e+01 1.091e+00 -9.346 &lt;2e-16 ***
+## Categoryfibrosis -9.116e-01 5.581e+00 -0.163 0.870
+## Categoryhepatitis 2.065e-01 1.692e+00 0.122 0.903
+## ALP_c:Categorycirrhosis -7.037e-04 1.777e-02 -0.040
+0.968
+## ALP_c:Categoryfibrosis -5.730e-02 1.811e-01 -0.316 0.752
+## ALP_c:Categoryhepatitis -4.541e-02 4.933e-02 -0.921
+0.358
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 4.981 on 574 degrees of freedom
+## Multiple R-squared: 0.1499, Adjusted R-squared: 0.1395
+## F-statistic: 14.46 on 7 and 574 DF, p-value: &lt; 2.2e-16</code></pre>
+<p>Our R-squared is 0.1499, which is the proportion of variation that our model can explain. Albumin blood levels for a normal blood donor is 42.188 g/L with an average alkaline phosphate level. For every 1-unit increase in alkaline phosphate level for a normal blood donor, albumin level decreases 0.0005053 g/L. Those with a Cirrhosis diagnosis with an average alkaline phosphate level have an albumin level 10.20 g/L lower than normal blood donors.Those with a Fibrosis diagnosis with an average alkaline phosphate level have an albumin level 0.912 g/L lower than normal blood donors. Next,those with a Hepatitis C diagnosis and with an average alkaline phosphate level have an albumin level 0.207 g/L higher than normal blood donors. Finally, the slope of alkaline phosphate on albumin level for those with Cirrhosis, Fibrosis, and Hepatitis C is 0.0007037,0.0573043, and 0.0454149 less than for normal blood donors, respectively.</p>
+<pre class="r"><code># LINEAR REGRESSION GRAPH
+ggplot(hep_c, aes(ALP_c, ALB, color = Category)) + geom_smooth(method = &quot;lm&quot;, 
+    se = F, fullrange = T) + geom_point() + geom_vline(xintercept = 0, 
+    lty = 2)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Homoskedasticity
+library(lmtest)
+library(sandwich)
+bptest(linmod_hep_c)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  linmod_hep_c
+## BP = 2.2743, df = 7, p-value = 0.9431</code></pre>
+<pre class="r"><code>resids &lt;- linmod_hep_c$residuals
+
+# Normality
+ks.test(resids, &quot;pnorm&quot;, mean = 0, sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.050403, p-value = 0.1039
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>fitted &lt;- lm(ALB ~ ALP_c * Category, data = hep_c)$fitted.values
+ggplot() + geom_point(aes(fitted, resids))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-7-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>After conducting the Breusch-Pagan test for homoskedasticity on the linear model, we can conclude that the model meets the homoskedasticity assumption (p=0.943). After also conducting the Kolmogorov-Smirnov test to check for normality, we can say our model meets the normality assumption (p=0.10). However, by plotting the residuals against the fitted values, it does not appear that there is a linear relationship.</p>
+<pre class="r"><code># recompute regression with robust SEs
+coeftest(linmod_hep_c, vcov = vcovHC(linmod_hep_c))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 4.2188e+01 2.1967e-01 192.0549 &lt;2e-16 ***
+## ALP_c -5.0528e-04 1.1771e-02 -0.0429 0.9658
+## Categorycirrhosis -1.0199e+01 1.1497e+00 -8.8712 &lt;2e-16
+***
+## Categoryfibrosis -9.1160e-01 3.6199e+00 -0.2518 0.8013
+## Categoryhepatitis 2.0646e-01 1.8388e+00 0.1123 0.9106
+## ALP_c:Categorycirrhosis -7.0372e-04 1.3872e-02 -0.0507
+0.9596
+## ALP_c:Categoryfibrosis -5.7304e-02 1.0553e-01 -0.5430
+0.5873
+## ALP_c:Categoryhepatitis -4.5415e-02 5.4304e-02 -0.8363
+0.4033
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>After computing the regression model with robust standard errors, there was no difference in the coefficient estimates compared to the previously run regression model. There was only one significant coefficient in the regression model. Those with a Cirrhosis diagnosis with an average alkaline phosphate level have an albumin level 10.20 g/L lower than normal blood donors (p&lt;0.05).</p>
+<pre class="r"><code># Resampling Residuals
+fit &lt;- lm(ALB ~ ALP_c * Category, data = hep_c)
+resids &lt;- fit$residuals
+fitted &lt;- fit$fitted.values
+
+resid_resample &lt;- replicate(5000, {
+    new_resids &lt;- sample(resids, replace = TRUE)
+    hep_c$new_ALB &lt;- fitted + new_resids
+    fit &lt;- lm(new_ALB ~ ALP_c * Category, data = hep_c)
+    coef(fit)
+})
+
+resid_resample %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) ALP_c Categorycirrhosis Categoryfibrosis
+Categoryhepatitis
+## 1 0.2149457 0.01212266 1.09127 5.482582 1.701786
+## ALP_c:Categorycirrhosis ALP_c:Categoryfibrosis
+ALP_c:Categoryhepatitis
+## 1 0.01755235 0.1766856 0.04980107</code></pre>
+<p>There were some slight changes in bootstrapped SEs from the original and robust SEs. The bootstrapped SEs for cirrhosis and fibrosis were lower than their original SEs. Likewise, the bootstrapped SEs for cirrhosis and hepatitis C were lower than the robust SEs. Fibrosis bootstrapped SE was much greater than the robust SE. Finally, the bootstrap SE for the interaction between alkaline phosphatase level and fibrosis status is greater than the robust SE for the interaction.</p>
+</div>
+<div id="logistic-regression" class="section level2">
+<h2>Logistic Regression</h2>
+<pre class="r"><code>hep &lt;- hep %&gt;% mutate(sex_bin = ifelse(Sex == &quot;m&quot;, 1, 0))
+hep &lt;- hep %&gt;% mutate(diag = ifelse(Category == &quot;blood_donor&quot;, 
+    0, 1))
+
+fit_hep &lt;- glm(diag ~ sex_bin + BIL + CHE, data = hep, family = &quot;binomial&quot;)
+summary(fit_hep)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = diag ~ sex_bin + BIL + CHE, family =
+&quot;binomial&quot;,
+## data = hep)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -2.2142 -0.3710 -0.3146 -0.2663 2.8806
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -2.45762 0.70129 -3.504 0.000458 ***
+## sex_bin 0.22863 0.37151 0.615 0.538277
+## BIL 0.09751 0.01663 5.864 4.52e-09 ***
+## CHE -0.15762 0.07878 -2.001 0.045405 *
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 368.64 on 581 degrees of freedom
+## Residual deviance: 276.10 on 578 degrees of freedom
+## AIC: 284.1
+##
+## Number of Fisher Scoring iterations: 6</code></pre>
+<pre class="r"><code>exp(coef(fit_hep)) %&gt;% round(3)</code></pre>
+<pre><code>## (Intercept)     sex_bin         BIL         CHE 
+##       0.086       1.257       1.102       0.854</code></pre>
+<p>The logistic regression model is predicting whether someone is or is not diagnosed with a liver disease (hepatitis, cirrhosis, or fibrosis) from bilirubin level, acetylcholinerase level, and sex.</p>
+<p>The odds of disease diagnosis for females with a bilirubin level of 0 is 0.086. When controlling for bilirubin level and , the odds of disease diagnosis for males is 1.257 times the odds of disease diagnosis for females, however it is not significant (p=0.54). When controlling for sex and acetylcholinerase level, for every 1-unit increase in bulirubin level, the odds of disease diagnosis for females increases by a factor of 1.102 (p&lt;0.05). When controlling for bilirubin and sex, for every 1-unit increase in acetylcholinerase level, the odds of disease diagnosis for females increases by a factor of 0.854 (p&lt;0.05).</p>
+<pre class="r"><code>probs &lt;- predict(fit_hep, type = &quot;response&quot;)
+table(predict = as.numeric(probs &gt; 0.5), truth = hep$diag) %&gt;% 
+    addmargins  #0.5 is cutoff for disease diagnosis</code></pre>
+<pre><code>##        truth
+## predict   0   1 Sum
+##     0   521  39 560
+##     1     5  17  22
+##     Sum 526  56 582</code></pre>
+<pre class="r"><code>class_diag(probs, hep$diag)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9243986 0.3035714 0.9904943 0.7727273 0.8062704</code></pre>
+<p>Our model has an AUC of 0.806, which is considered “good”. However, the model has a low sensitivity of 0.304; But the specificity is high, with a proportion of 0.99. The accuracy of our model is 0.924 and the precision is 0.773.</p>
+<pre class="r"><code># density plot of the log-odds (logit) colored/grouped by
+# your binary diagnosis variable
+hep$logit &lt;- predict(fit_hep, type = &quot;link&quot;)  #get predicted logit scores (logodds)
+
+hep %&gt;% mutate(diag = as.factor(diag)) %&gt;% ggplot() + geom_density(aes(logit, 
+    fill = diag, color = diag), alpha = 0.4) + theme(legend.position = c(0.85, 
+    0.85)) + geom_vline(xintercept = 0) + xlab(&quot;predictor (logit)&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>hep_all &lt;- hep %&gt;% select(diag, Age, sex_bin, ALB, ALP, ALT, 
+    AST, BIL, CHE, CHOL, CREA, GGT, PROT)
+
+fit_hep_all &lt;- glm(diag ~ ., data = hep_all, family = &quot;binomial&quot;)
+proby &lt;- predict(fit_hep_all, type = &quot;response&quot;)
+class_diag(proby, hep_all$diag)</code></pre>
+<pre><code>##         acc      sens      spec      ppv       auc
+## 1 0.9896907 0.9285714 0.9961977 0.962963 0.9953829</code></pre>
+<p>After performing a logistic regression predicting diagnosis status from all other variables, our calculated AUC is 0.995, which is considered “great”. The sensitivity and specificity are 0.929 and 0.996, respectively. Accuracy was calculated to be 0.9897. Precision was 0.963.</p>
+<pre class="r"><code># 10-fold CV on model
+set.seed(1234)
+k = 10
+
+data &lt;- hep_all[sample(nrow(hep_all)), ]
+folds &lt;- cut(seq(1:nrow(hep_all)), breaks = k, labels = F)
+diags &lt;- NULL
+for (i in 1:k) {
+    train &lt;- data[folds != i, ]
+    test &lt;- data[folds == i, ]
+    truth &lt;- test$diag
+    fit &lt;- glm(diag ~ ., data = train, family = &quot;binomial&quot;)
+    probs &lt;- predict(fit, newdata = test, type = &quot;response&quot;)
+    diags &lt;- rbind(diags, class_diag(probs, truth))
+}
+summarize_all(diags, mean)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9742256 0.8116667 0.9922264 0.9282143 0.9619752</code></pre>
+<p>After performing the 10-fold cross validation on the logistic regression model predicting diagnosis status from all other variables, our newly calculated AUC is 0.962, which is still considered “great”. However, the decrease in AUC from 0.99 to 0.96 indicates overfitting. The newly calculated sensitivity and specificity are 0.812 and 0.992, respectively. Accuracy was calculated to be 0.974. Precision was 0.928.</p>
+<pre class="r"><code># LASSO
+library(glmnet)
+set.seed(1234)
+
+y &lt;- as.matrix(hep_all$diag)
+x &lt;- model.matrix(diag ~ ., data = hep_all)[, -1]
+
+cv &lt;- cv.glmnet(x, y, family = &quot;binomial&quot;)
+lasso &lt;- glmnet(x, y, family = &quot;binomial&quot;, lambda = cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 13 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                       s0
+## (Intercept) -2.061082897
+## Age          .          
+## sex_bin      .          
+## ALB          .          
+## ALP         -0.021440994
+## ALT         -0.101607389
+## AST          0.055727362
+## BIL          0.009897257
+## CHE          .          
+## CHOL        -0.015435146
+## CREA         0.004157636
+## GGT          0.015134816
+## PROT         .</code></pre>
+<pre class="r"><code>lasso_dat &lt;- hep_all
+lasso_dat_fit &lt;- glm(diag ~ ., data = lasso_dat, family = &quot;binomial&quot;)
+
+prob_lasso &lt;- predict(lasso_dat_fit, type = &quot;response&quot;)</code></pre>
+<p>According to the LASSO that was run, the variables that were retained were alkaline phosphatase level (ALP), alanine transaminase level (ALT), Aspartate Transaminase level(AST), Bilirubin level (BIL), cholesterol (CHOL), creatine (CREA), and Gamma-Glutamyl Transferase(GGT)</p>
+<pre class="r"><code># 10-fold CV on LASSO variables
+
+set.seed(1234)
+k = 10
+data &lt;- lasso_dat[sample(nrow(lasso_dat)), ]
+folds &lt;- cut(seq(1:nrow(lasso_dat)), breaks = k, labels = F)
+diags &lt;- NULL
+for (i in 1:k) {
+    train &lt;- data[folds != i, ]
+    test &lt;- data[folds == i, ]
+    truth &lt;- test$diag
+    fit &lt;- glm(diag ~ ., data = train, family = &quot;binomial&quot;)
+    probs &lt;- predict(fit, newdata = test, type = &quot;response&quot;)
+    diags &lt;- rbind(diags, class_diag(probs, truth))
+}
+summarize_all(diags, mean)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9742256 0.8116667 0.9922264 0.9282143 0.9619752</code></pre>
+<p>The model’s out-of-sample AUC is much greater than the AUC calculated from the above logistic regression. The AUC increased from a “good” value of 0.806 to a “great” value 0.962.</p>
+<p>…</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Alexandra Garcia</title>
+    <link>/project/</link>
+    <description>Recent content in Projects on Alexandra Garcia</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Fri, 07 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/project/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Fri, 07 May 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Modeling #LEAVE THIS CHUNK ALONE! library(knitr) opts_chunk$set(fig.align=&amp;quot;center&amp;quot;, fig.height=5, message=FALSE, warning=FALSE, fig.width=8, tidy.opts=list(width.cutoff=60),tidy=TRUE) class_diag&amp;lt;-function(probs,truth){ tab&amp;lt;-table(factor(probs&amp;gt;.5,levels=c(&amp;quot;FALSE&amp;quot;,&amp;quot;TRUE&amp;quot;)),truth) acc=sum(diag(tab))/sum(tab) sens=tab[2,2]/colSums(tab)[2] spec=tab[1,1]/colSums(tab)[1] ppv=tab[2,2]/rowSums(tab)[2] if(is.numeric(truth)==FALSE &amp;amp; is.logical(truth)==FALSE) truth&amp;lt;-as.numeric(truth)-1 #CALCULATE EXACT AUC ord&amp;lt;-order(probs, decreasing=TRUE) probs &amp;lt;- probs[ord]; truth &amp;lt;- truth[ord] TPR=cumsum(truth)/max(1,sum(truth)) FPR=cumsum(!truth)/max(1,sum(!truth)) dup&amp;lt;-c(probs[-1]&amp;gt;=probs[-length(probs)], FALSE) TPR&amp;lt;-c(0,TPR[!dup],1); FPR&amp;lt;-c(0,FPR[!dup],1) n &amp;lt;- length(TPR) auc&amp;lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) ) data.frame(acc,sens,spec,ppv,auc) }  Introduction hep &amp;lt;- read_csv(&amp;quot;hep.csv&amp;quot;) # Remove all rows with NAs hep &amp;lt;- na.omit(hep) hep$Category[which(hep$Category == &amp;quot;0=Blood Donor&amp;quot;)] = &amp;quot;blood_donor&amp;quot; hep$Category[which(hep$Category == &amp;quot;3=Cirrhosis&amp;quot;)] = &amp;quot;cirrhosis&amp;quot; hep$Category[which(hep$Category == &amp;quot;1=Hepatitis&amp;quot;)] = &amp;quot;hepatitis&amp;quot; hep$Category[which(hep$Category == &amp;quot;2=Fibrosis&amp;quot;)] = &amp;quot;fibrosis&amp;quot; hep &amp;lt;- hep %&amp;gt;% filter(Category !</description>
+    </item>
+    
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Sun, 04 Apr 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Introduction Four data sets were used for the exploratory data analysis project. The first data set includes COVID-19 vaccine data for each county within the state of Texas. Variables within the COVID-19 dataset include the number of people fully vaccinated, the number of people vaccinated with at least one dose, the total estimated population that is 16 years or older, the total estimated population that is 65 years or older, and the total number of individuals from ages 16 through 64 that have at least one chronic medical condition that puts them at risk for severe illness from the COVID-19 virus.</description>
+    </item>
+    
+  </channel>
+</rss>

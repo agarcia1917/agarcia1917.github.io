@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Alexandra Garcia" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         April 4, 2021 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Four data sets were used for the exploratory data analysis project. The first data set includes COVID-19 vaccine data for each county within the state of Texas. Variables within the COVID-19 dataset include the number of people fully vaccinated, the number of people vaccinated with at least one dose, the total estimated population that is 16 years or older, the total estimated population that is 65 years or older, and the total number of individuals from ages 16 through 64 that have at least one chronic medical condition that puts them at risk for severe illness from the COVID-19 virus. Population estimates within this specific data set were grabbed from the 2019 Population Estimates from the U.S Census Bureau.</p>
+<p>The second data set includes poverty estimates for the U.S, U.S states, and U.S counties from 2019. Variables within the dataset include the total number of people of all ages living in poverty and the percentage of people of all ages living in poverty for each state and county within the U.S. The data set also includes the estimated median household income in 2019.</p>
+<p>The third and fourth data set used are much smaller in size compared to the first two. The third data set includes the 2019 total population for each county within the state of Texas. The fourth data set includes the names of Texas counties and their corresponding public health region within the state. Joining these sets of data intrigued me because I wanted to see if there is any association between COVID-19 vaccination, poverty levels, medical conditions, and public health regions.</p>
+<div id="joining" class="section level3">
+<h3>Joining</h3>
+<pre class="r"><code>library(tidyverse)
+# upload the two datasets
+covid_vaccine &lt;- read_csv(&quot;covid19_vaccine_county_TX.csv&quot;)
+poverty_county &lt;- read_csv(&quot;poverty_county_TX.csv&quot;)
+pop_county &lt;- read_csv(&quot;2019_txpopest_county.csv&quot;)
+pbh_region &lt;- read_csv(&quot;tx_pbh_region.csv&quot;)
+
+covid_vaccine  # covid vaccine administered</code></pre>
+<pre><code>## # A tibble: 255 x 8
+##    county `Total Doses Al… `Vaccine Doses … `People Vaccina… `People Fully V…
+##    &lt;chr&gt;             &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+##  1 Ander…            13970             9681             6723             3648
+##  2 Andre…             5100             9056             5223             3934
+##  3 Angel…            40500            29143            19054            10903
+##  4 Arans…             4670            12396             7938             4726
+##  5 Archer             2400             3819             2355             1591
+##  6 Armst…             1700              837              516              332
+##  7 Atasc…            13100            14728             9903             5284
+##  8 Austin             6000            14393            10055             4992
+##  9 Bailey            20395             3399             1960             1559
+## 10 Bande…             3000             8281             5695             2863
+## # … with 245 more rows, and 3 more variables: `Population, 16+` &lt;dbl&gt;,
+## #   `Population, 65+` &lt;dbl&gt;, `Population, 16-64\n Any Medical Condition` &lt;dbl&gt;</code></pre>
+<pre class="r"><code>poverty_county  #poverty estimates in 2019</code></pre>
+<pre><code>## # A tibble: 254 x 4
+##    county    POVALL_2019 PCTPOVALL_2019 MEDHHINC_2019
+##    &lt;chr&gt;           &lt;dbl&gt;          &lt;dbl&gt;         &lt;dbl&gt;
+##  1 Anderson         8702           19.8         48461
+##  2 Andrews          1888           10.2         74918
+##  3 Angelina        13131           15.6         51750
+##  4 Aransas          4313           18.7         53085
+##  5 Archer            877           10.3         63731
+##  6 Armstrong         194           10.6         64424
+##  7 Atascosa         7434           14.7         57309
+##  8 Austin           3312           11.1         68311
+##  9 Bailey           1093           15.9         46174
+## 10 Bandera          2947           12.9         59604
+## # … with 244 more rows</code></pre>
+<pre class="r"><code>pop_county  # county population 2019</code></pre>
+<pre><code>## # A tibble: 254 x 2
+##    county    july1_2019_pop_est
+##    &lt;chr&gt;                  &lt;dbl&gt;
+##  1 Anderson               59025
+##  2 Andrews                19279
+##  3 Angelina               90989
+##  4 Aransas                23710
+##  5 Archer                  9228
+##  6 Armstrong               2001
+##  7 Atascosa               50898
+##  8 Austin                 32067
+##  9 Bailey                  7113
+## 10 Bandera                23129
+## # … with 244 more rows</code></pre>
+<pre class="r"><code>pbh_region  # public health regions for counties</code></pre>
+<pre><code>## # A tibble: 254 x 2
+##    county    pbh_region
+##    &lt;chr&gt;          &lt;dbl&gt;
+##  1 Anderson           4
+##  2 Andrews            9
+##  3 Angelina           5
+##  4 Aransas           11
+##  5 Archer             2
+##  6 Armstrong          1
+##  7 Atascosa           8
+##  8 Austin             6
+##  9 Bailey             1
+## 10 Bandera            8
+## # … with 244 more rows</code></pre>
+<pre class="r"><code># Joins
+povcov &lt;- full_join(poverty_county, covid_vaccine)
+povcov &lt;- full_join(povcov, pop_county)
+povcov &lt;- full_join(povcov, pbh_region)
+povcov &lt;- na.omit(povcov)
+
+# Rename variables
+povcov &lt;- povcov %&gt;% rename(median_house_income = MEDHHINC_2019, 
+    fully_vacc = &quot;People Fully Vaccinated&quot;, one_dose = &quot;People Vaccinated with at least One Dose&quot;, 
+    med_condition = &quot;Population, 16-64
+ Any Medical Condition&quot;)</code></pre>
+<p>The data sets were tidy as they initially were. A full_join() was done in 3 parts, with each full_join() adding a new data set to the main data set titled “povcov”. After having the full and complete data, all na’s were removed with na.omit(). Moreover, certain variables were renamed to make the process of calling up variables much easier. As mentioned previously, the datasets were tidy and therefore the process of using pivot_longer() was used during the Wrangling portion of the analysis.</p>
+</div>
+<div id="wrangling" class="section level3">
+<h3>Wrangling</h3>
+<pre class="r"><code>#### WRANGLING ####
+
+# mean table for numeric variables
+mean_povcov &lt;- povcov %&gt;% summarize_at(2:12, mean, na.rm = T) %&gt;% 
+    pivot_longer(1:11, names_to = &quot;Numeric Variables&quot;, values_to = &quot;Mean&quot;)
+
+# sd table for numeric variables
+sd_povcov &lt;- povcov %&gt;% summarize_at(2:12, sd, na.rm = T) %&gt;% 
+    pivot_longer(1:11, names_to = &quot;Numeric Variables&quot;, values_to = &quot;sd&quot;)
+# Right join mean and sd table for povcov
+mean_sd_povcov &lt;- right_join(mean_povcov, sd_povcov)
+
+
+# Min table for numeric variables
+min_povcov &lt;- povcov %&gt;% summarize_at(2:12, min, na.rm = T) %&gt;% 
+    pivot_longer(1:11, names_to = &quot;Numeric Variables&quot;, values_to = &quot;Min&quot;)
+
+# Max table for numeric variables
+max_povcov &lt;- povcov %&gt;% summarize_at(2:12, max, na.rm = T) %&gt;% 
+    pivot_longer(1:11, names_to = &quot;Numeric Variables&quot;, values_to = &quot;Max&quot;)
+
+# Right join min and max table for povcov
+min_max_povcov &lt;- right_join(min_povcov, max_povcov)
+
+
+# Median table for numeric variables
+median_povcov &lt;- povcov %&gt;% summarize_at(2:12, median, na.rm = T) %&gt;% 
+    pivot_longer(1:11, names_to = &quot;Numeric Variables&quot;, values_to = &quot;Median&quot;)
+
+# RIGHT JOIN FULL SUMMARY STATS FOR NUMERIC VARIABLES
+num_var_sum_stat &lt;- right_join(mean_sd_povcov, min_max_povcov) %&gt;% 
+    right_join(median_povcov)
+num_var_sum_stat</code></pre>
+<pre><code>## # A tibble: 11 x 6
+##    `Numeric Variables`            Mean        sd     Min       Max  Median
+##    &lt;chr&gt;                         &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 POVALL_2019                 15288.   58041.      12    701075    2644  
+##  2 PCTPOVALL_2019                 15.4      5.05     4.8      32.5    14.8
+##  3 median_house_income         54968.   13374.   31410    105763   52763  
+##  4 Total Doses Allocated       52412.  191025.       0   2130230    4900  
+##  5 Vaccine Doses Administered  44134.  159011.      46   1809800    6454  
+##  6 one_dose                    28558.  104750.      32   1214159    4046  
+##  7 fully_vacc                  16687.   57930.      14    641605    2733  
+##  8 Population, 16+             88558.  314644.     129   3601939   14869  
+##  9 Population, 65+             14744.   45878.      23    514167    3412  
+## 10 med_condition               32794.  118786.      50   1408024    5435  
+## 11 july1_2019_pop_est         114549.  408586.      96   4698655   19103</code></pre>
+<pre class="r"><code># High to low of total fully vaccinated people pbh regions
+povcov %&gt;% group_by(pbh_region) %&gt;% summarize(Total_fully_vaccinated = sum(fully_vacc)) %&gt;% 
+    arrange(desc(Total_fully_vaccinated))</code></pre>
+<pre><code>## # A tibble: 11 x 2
+##    pbh_region Total_fully_vaccinated
+##         &lt;dbl&gt;                  &lt;dbl&gt;
+##  1          3                1144329
+##  2          6                1026219
+##  3          7                 461148
+##  4          8                 455231
+##  5         11                 407558
+##  6         10                 157480
+##  7          1                 155061
+##  8          4                 133055
+##  9          5                  96760
+## 10          9                  94392
+## 11          2                  90522</code></pre>
+<pre class="r"><code># High to low Average median household income for each pbh
+# region
+povcov %&gt;% group_by(pbh_region) %&gt;% summarize(Average_median_household_income = mean(median_house_income)) %&gt;% 
+    arrange(desc(Average_median_household_income))</code></pre>
+<pre><code>## # A tibble: 11 x 2
+##    pbh_region Average_median_household_income
+##         &lt;dbl&gt;                           &lt;dbl&gt;
+##  1          3                          69729.
+##  2          6                          68293.
+##  3          9                          60949.
+##  4          7                          56715.
+##  5          8                          55176.
+##  6          1                          52835.
+##  7          4                          50937.
+##  8          2                          49337.
+##  9          5                          48276.
+## 10         11                          45506.
+## 11         10                          44640.</code></pre>
+<pre class="r"><code># Mutate county population size as a categorical (small,
+# medium, large)
+povcov &lt;- povcov %&gt;% mutate(county_pop_size_cat = ifelse(july1_2019_pop_est &gt; 
+    999999, &quot;large&quot;, ifelse(july1_2019_pop_est &lt;= 999999 &amp; 250000 &lt;= 
+    july1_2019_pop_est, &quot;medium&quot;, &quot;small&quot;)))
+
+
+# Count distinct entries in categorical variable
+povcov %&gt;% summarize_if(is.character, n_distinct, na.rm = T)</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   county county_pop_size_cat
+##    &lt;int&gt;               &lt;int&gt;
+## 1    253                   3</code></pre>
+<pre class="r"><code># count how many counties for each population category
+# (small, medium, large)
+povcov %&gt;% group_by(county_pop_size_cat) %&gt;% summarize(number_of_counties = n())</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   county_pop_size_cat number_of_counties
+##   &lt;chr&gt;                            &lt;int&gt;
+## 1 large                                6
+## 2 medium                              15
+## 3 small                              232</code></pre>
+<pre class="r"><code>### MUTATE: Percentage of population fully vaccinated for each
+### county given the 2019 population estimate
+povcov &lt;- povcov %&gt;% mutate(percent_fully_vaccinated = fully_vacc/july1_2019_pop_est * 
+    100)
+
+### MUTATE: Percentage of population with at least one dose for
+### each county given the 2019 pop. estimate
+povcov &lt;- povcov %&gt;% mutate(percent_one_dose = one_dose/july1_2019_pop_est * 
+    100)
+
+### MUTATE: Percentage of county population with any medical
+### condition from ages 16-64
+povcov &lt;- povcov %&gt;% mutate(percent_med_condition = med_condition/july1_2019_pop_est * 
+    100)
+
+
+# County with the highest percentage of fully vaccinated and
+# the region it&#39;s located
+povcov %&gt;% select(county, percent_fully_vaccinated, pbh_region) %&gt;% 
+    filter(percent_fully_vaccinated == max(percent_fully_vaccinated, 
+        na.rm = T))</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   county   percent_fully_vaccinated pbh_region
+##   &lt;chr&gt;                       &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Presidio                     34.7         10</code></pre>
+<pre class="r"><code># County with the lowest percentage of fully vaccinated and
+# the region it&#39;s located
+povcov %&gt;% select(county, percent_fully_vaccinated, pbh_region) %&gt;% 
+    filter(percent_fully_vaccinated == min(percent_fully_vaccinated, 
+        na.rm = T))</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   county   percent_fully_vaccinated pbh_region
+##   &lt;chr&gt;                       &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Anderson                     6.18          4</code></pre>
+<pre class="r"><code># percentage of pbh region that are fully vaccinated
+povcov %&gt;% group_by(pbh_region) %&gt;% summarize(percent_full_vacc_region = sum(fully_vacc)/sum(july1_2019_pop_est, 
+    na.rm = T) * 100) %&gt;% arrange(desc(percent_full_vacc_region))</code></pre>
+<pre><code>## # A tibble: 11 x 2
+##    pbh_region percent_full_vacc_region
+##         &lt;dbl&gt;                    &lt;dbl&gt;
+##  1         10                     18.0
+##  2          1                     17.8
+##  3         11                     17.8
+##  4          2                     16.3
+##  5          8                     15.1
+##  6          3                     14.4
+##  7          9                     14.3
+##  8          6                     14.2
+##  9          7                     12.9
+## 10          5                     12.4
+## 11          4                     11.4</code></pre>
+<pre class="r"><code># percentage people in pbh region that have received at least
+# 1 vaccine dose
+povcov %&gt;% group_by(pbh_region) %&gt;% summarize(percent_one_dose_region = sum(one_dose)/sum(july1_2019_pop_est, 
+    na.rm = T) * 100) %&gt;% arrange(desc(percent_one_dose_region))</code></pre>
+<pre><code>## # A tibble: 11 x 2
+##    pbh_region percent_one_dose_region
+##         &lt;dbl&gt;                   &lt;dbl&gt;
+##  1         10                    30.6
+##  2         11                    29.6
+##  3          1                    26.1
+##  4          6                    25.6
+##  5          8                    25.1
+##  6          7                    24.3
+##  7          3                    24.2
+##  8          2                    23.7
+##  9          9                    21.9
+## 10          5                    20.8
+## 11          4                    18.4</code></pre>
+<pre class="r"><code># percentage of people of all ages living in poverty for each
+# pbh region
+povcov %&gt;% group_by(pbh_region) %&gt;% summarize(pct_poverty = sum(POVALL_2019)/sum(july1_2019_pop_est, 
+    na.rm = T) * 100) %&gt;% arrange(desc(pct_poverty))</code></pre>
+<pre><code>## # A tibble: 11 x 2
+##    pbh_region pct_poverty
+##         &lt;dbl&gt;       &lt;dbl&gt;
+##  1         11        23.0
+##  2         10        18.2
+##  3          5        15.9
+##  4          1        15.2
+##  5          4        15.0
+##  6          8        14.1
+##  7          2        13.6
+##  8          6        12.9
+##  9          9        12.1
+## 10          7        11.5
+## 11          3        10.4</code></pre>
+<pre class="r"><code># Showing counties with the highest and lowest median
+# household income and their percentage of population fully
+# vaccinated and the estimated percent of people of all ages
+# in poverty 2019 and pbh region
+povcov %&gt;% mutate(percent_fully_vaccinated = fully_vacc/july1_2019_pop_est * 
+    100) %&gt;% select(county, percent_fully_vaccinated, median_house_income, 
+    PCTPOVALL_2019, pbh_region) %&gt;% filter(median_house_income == 
+    max(median_house_income, na.rm = T) | median_house_income == 
+    min(median_house_income, na.rm = T))</code></pre>
+<pre><code>## # A tibble: 2 x 5
+##   county   percent_fully_vaccinated median_house_inco… PCTPOVALL_2019 pbh_region
+##   &lt;chr&gt;                       &lt;dbl&gt;              &lt;dbl&gt;          &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Brooks                       25.5              31410           29.6         11
+## 2 Rockwall                     16.0             105763            4.8          3</code></pre>
+<p>The first portion of the Wrangling section deals with calculating the mean, standard deviation, minimum, maximum, and median for all the numeric variables found in the data set of povcov using summarize_at(). In this section, right_join() and pivot_longer() functions are also used to create a table that illustrates the summary statistics for the numeric variables. From the gathered data, the minimum and maximum percentage of people living in poverty of all ages in a county is 4.8% and 32.5%, respectively.</p>
+<p>Using other core dplyr functions such as mutate(), group_by(), summarize(), filter(), select(), and arrange(), we found that the public health region with the highest median household income is region 3 (Dallas-Forth Worth area), and the lowest is region 10 (El Paso area). Moreover, the county with the highest percentage of fully vaccinated individuals is Presidio county in region 10 with a percentage of 34.7%. Region 10 holds the greatest percentage of fully vaccinated individuals, 18.0%, while region 4 holds the lowest percentage with 11.4%. Finally, region 11 (South Texas) has the greatest percentage of people of all ages living in poverty with a percentage of 23.0%.</p>
+</div>
+<div id="visualization" class="section level3">
+<h3>Visualization</h3>
+<div id="correlation-heatmap" class="section level5">
+<h5>Correlation Heatmap</h5>
+<pre class="r"><code># create new table with only numerical columns
+povcov_num &lt;- povcov %&gt;% select(PCTPOVALL_2019, median_house_income, 
+    percent_fully_vaccinated, percent_one_dose, percent_med_condition)
+
+cormat_povcov &lt;- povcov_num %&gt;% select_if(is.numeric) %&gt;% cor(use = &quot;pair&quot;)
+
+tidy_cormat_povcov &lt;- cormat_povcov %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;var1&quot;) %&gt;% 
+    pivot_longer(-1, names_to = &quot;var2&quot;, values_to = &quot;correlation&quot;)
+
+tidy_cormat_povcov %&gt;% ggplot(aes(var1, var2, fill = correlation)) + 
+    geom_tile() + scale_fill_gradient2(low = &quot;red&quot;, mid = &quot;yellow&quot;, 
+    high = &quot;green&quot;) + geom_text(aes(label = round(correlation, 
+    2)), color = &quot;black&quot;, size = 4) + theme(axis.text.x = element_text(angle = 30, 
+    hjust = 1)) + coord_fixed() + ggtitle(&quot;Correlation Heatmap&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The heatmap above illustrates the correlations between some of the numeric variables found within the povcov data set.Green tiles indicate a positive correlation whereas red indicates a negative correlation. We can see that there is a negative correlation of -0.82 between the estimated percent of people of all ages in poverty and median household income. This correlation makes sense because as household income increases, poverty should decrease.There is also a slight negative correlation of -0.34 between median household income and the percentage of the population with a chronic medical condition between the ages of 16-64. This correlation is interesting because although slight, it may suggest that as median household income decreases, the percentage of chronic medical conditions within a population increases. Furthermore, there is a slight positive correlation of 0.49 between the percentage of poverty and the percentage of chronic medical conditions within a given county. Interestingly, there is a negative correlation of -0.2 between median household income and the percentage of fully COVID-19 vaccinated individuals.</p>
+</div>
+<div id="plot-1" class="section level5">
+<h5>Plot 1</h5>
+<pre class="r"><code>ggplot(data = povcov) + geom_point(mapping = aes(x = median_house_income, 
+    y = percent_fully_vaccinated, color = as.character(pbh_region)), 
+    size = 0.5) + facet_wrap(~as.character(pbh_region)) + labs(title = &quot;Median Household Income and % of Population Fully Vaccinated&quot;, 
+    x = &quot;Median Household Income ($)&quot;, y = &quot;% of Population Fully Vaccinated&quot;, 
+    color = &quot;TX Public Health Region&quot;) + theme(axis.text.x = element_text(angle = 90))</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The plots above illustrates the relationship between median household income and the percentage of the population that is fully COVID-19 vaccinated for each county. Each point, which represents a county, is colored by the corresponding public health region it pertains to. To better see the points for each region, the plot was stratified by public health regions. As previously mentioned in the correlation heatmap, there is a slight negative correlation of -0.2 between median household income and the percentage of fully vaccinated individuals. It is difficult to assess whether there is a correlation between the two variables for each region. However, just by looking at the scatter plots, there seems to be a slight downwards trend in region 11, with median household income increasing and the percentage of fully vaccinated individuals decreasing. In region 3, however, none of the counties surpass having 20% of their population fully vaccinated. Instead, it appears that there is no obvious change in percentage of fully vaccinated populations as median household income increases.</p>
+</div>
+<div id="plot-2" class="section level5">
+<h5>Plot 2</h5>
+<pre class="r"><code>ggplot(povcov, aes(x = as.character(pbh_region), y = PCTPOVALL_2019)) + 
+    geom_bar(stat = &quot;summary&quot;, color = &quot;black&quot;, fill = &quot;white&quot;) + 
+    geom_errorbar(stat = &quot;summary&quot;, width = 0.5, color = &quot;red&quot;) + 
+    facet_wrap(~county_pop_size_cat) + labs(title = &quot;% of Population living in Poverty in each TX Public Health Region by County size&quot;, 
+    x = &quot;TX Public Health Region&quot;, y = &quot;% of Population living in Poverty&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The graph above illustrates the percentage of the population for each region living in poverty, stratified by categorical county size of large, medium, and small. Regions 3, 6, 7, and 8 are the only regions that contain large sized counties. Within the large county group, there is great variability of poverty percentage within the large counties found in region 3. However, region 3, despite the county sizes, exhibit the lowest percentage of poverty within the population.Region 3 encompasses the Dallas-Forth Worth area. The county with the greatest percentage of population living in poverty is region 11. There seems to be no difference between the smaller counties versus the medium counties in terms of mean percentage of poverty. Region 11 is the southern-most portion of Texas which includes cities like McAllen, Laredo, and Brownsville.</p>
+</div>
+</div>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
